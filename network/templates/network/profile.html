@@ -1,0 +1,108 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+<div id="new_post_view" style="margin:1%;">
+    <div style="border: 1px solid lightgray; border-radius: 10px; margin-left: 2%; margin-top: 1%; width:95%; ">
+        <div stylpe ="padding: 2%;">
+        <b><h4>{{profile_user}}</h4></b>
+            
+        <form action="{% url 'profile' profile_user %}" method ="POST">
+            {% csrf_token %}
+            {% if profile_user != user %}
+                {% if is_following %}
+                    <input type="submit" name="unfollow" title="Unfollow" value="Unfollow">
+                {% else %}
+                    <input type="submit" name="follow" title="Follow" value="Follow">
+                {% endif %}    
+            {% endif %}
+            </form>
+        <br>
+            Follower: {{follower_count}}<br>
+            Following: {{following_count}}<br>
+        </div>
+    </div>
+
+    <hr>
+    <b>{{profile_user}}'s post(s):</b><br>
+    <div id="user_all_post_view" style="margin:1%;">
+
+        {% for post in page_obj %}
+        <div style="border: 1px solid lightgray; border-radius: 10px; margin-left: 2%; margin-top: 1%; width:95%; ">
+            <form style="padding: 2%; text-align: left;" method="POST" name="edit_post">
+            {% csrf_token %}
+                <b>{{post.author}}</b><br>
+
+                <p id="post_{{post.content}}">{{post.content}}
+                <input name="original_post" type="hidden" value="{{post.content}}"> 
+                    
+                    {% if post.author == user %}<span style="float: right;">
+                    <button id="{{post.content}}" type="button">Edit</button></p>
+
+                    <script>      
+
+                        document.getElementById('{{post.content}}').onclick = function () { // Note this is a function
+                        console.log('{{post.content}}');
+                        document.getElementById('edit_{{post.content}}').style.display = 'block';
+                        document.getElementById('post_{{post.content}}').style.display = 'none';
+
+                        document.getElementById('save_{{post.content}}').onclick = function (){
+                            
+                            console.log('post saved');
+                            var URL ="{% url 'index' %}"
+                            var input = document.getElementById('text_{{post.content}}').value;
+                            //console.log(input);
+                            document.getElementById("post_{{post.content}}").innerHTML = input;
+
+                            document.getElementById('edit_{{post.content}}').style.display = 'none';
+                            document.getElementById('post_{{post.content}}').style.display = 'block';
+                                                        
+                            document.location.reload();    
+                            
+                            };
+                        };
+
+                    </script>
+                    <p id="edit_{{post.content}}" style="display: none;">
+                    <input name="original_post" type="hidden" value="{{post.content}}"> 
+                    <textarea id ="text_{{post.content}}" name="edit_content" autofocus style="width:95%">{{post.content}}</textarea>
+                    <input type="submit" id="save_{{post.content}}" name="edit_post" value="Save"> </p> </span>
+                        
+                        {% endif%}
+                        <br>
+                        {% if post.updated_at %}
+                            {{post.updated_at}}(edited)
+                        {% else %}
+                            {{post.created_at}}
+                        {% endif %}
+                        <br>
+
+                        {% if user in post.likes.filter %}  
+                        <button name="unlike" style="color: red; background: none; border: none;" title="Unlike" id="unlike">&hearts; <span style="color: grey;">{{post.likes.count}}</span> </button>  
+                        {% else %}
+                        <button name="like" style="color: grey; background: none; border: none; " title="Like" id="like">&hearts; {{post.likes.count}}</button>
+                        {% endif %}
+                    </form>
+    </div>
+
+    {% endfor %}
+    <br>
+    <div class="pagination" style="margin-left: 50%">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+    
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+{% endblock %}
